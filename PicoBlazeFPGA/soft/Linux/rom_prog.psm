@@ -1,0 +1,127 @@
+; Universidad Autonoma de Madrid
+; Escuela Politecnica Superior
+; Laboratorio de DIE / DPySE
+;
+; Example program to run on a PicoBlaze design implemented in Zybo board.
+;
+
+; ------------------------------------------------------------------------------
+; Constants declarations                                        
+; ------------------------------------------------------------------------------
+
+; Constants for addresses of peripherals' registers ("ports"): <--- MODIFICAR ESTOS VALORES
+;   - gen_interrupt registers:
+CONSTANT GENINT_0_PORT       ,       48     ; Interrupt generator interval, byte 0
+CONSTANT GENINT_1_PORT       ,       49     ; Interrupt generator interval, byte 1
+CONSTANT GENINT_2_PORT       ,       4A     ; Interrupt generator interval, byte 2
+CONSTANT GENINT_3_PORT       ,       4B     ; Interrupt generator interval, byte 3
+;   - sw_btn_leds registers: 
+CONSTANT SWITCHES_PORT       ,       F0     ; Slide switches
+CONSTANT BUTTONS_PORT        ,       F1     ; Push buttons
+CONSTANT LEDS_PORT           ,       F2     ; LEDs
+;   - copro registers:       
+CONSTANT DATA_0_PORT         ,       90     ; 7-segment digit 0
+CONSTANT DATA_1_PORT         ,       91     ; 7-segment digit 1
+CONSTANT DATA_2_PORT         ,       92     ; 7-segment digit 2
+CONSTANT DATA_3_PORT         ,       93     ; 7-segment digit 3
+CONSTANT RESULT_PORT         ,       94     ; 7-segment refresh. interval, byte 0
+
+; Constants for values of hardware configuration:
+; - gen_interrupt configuration to get one interrupt every 6250000 cycles (0.1s @62.5MHz):
+CONSTANT INT_INTERVAL_0      ,       0F     ; Interrupt generation interval, byte 0
+CONSTANT INT_INTERVAL_1      ,       5E     ; Interrupt generation interval, byte 1
+CONSTANT INT_INTERVAL_2      ,       5F     ; Interrupt generation interval, byte 2
+CONSTANT INT_INTERVAL_3      ,       00     ; Interrupt generation interval, byte 3
+; - gen_interrupt configuration to get one interrupt every 500 cycles:
+;   (this is used only for the first interrupt, to get it quickly in simulation)
+CONSTANT INT_INTERVAL_0_1ST  ,       F3     ; Interrupt generation interval, byte 0
+CONSTANT INT_INTERVAL_1_1ST  ,       01     ; Interrupt generation interval, byte 1
+CONSTANT INT_INTERVAL_2_1ST  ,       00     ; Interrupt generation interval, byte 2
+CONSTANT INT_INTERVAL_3_1ST  ,       00     ; Interrupt generation interval, byte 3
+                                        
+; ------------------------------------------------------------------------------
+; Program start                                 
+; ------------------------------------------------------------------------------
+                                        
+; Initial configuration of hardware blocks:
+; - Initialize interrupt generation interval according to constants defined above:
+                     LOAD      s6, INT_INTERVAL_0_1ST
+                     LOAD      s7, INT_INTERVAL_1_1ST
+                     LOAD      s8, INT_INTERVAL_2_1ST
+                     LOAD      s9, INT_INTERVAL_3_1ST
+                     OUTPUT    s6, GENINT_0_PORT
+                     OUTPUT    s7, GENINT_1_PORT
+                     OUTPUT    s8, GENINT_2_PORT
+                     OUTPUT    s9, GENINT_3_PORT
+
+; Check reading of one register from gen_interrupt and another from sevenseg:
+                     INPUT     s6, GENINT_0_PORT      ;
+                     COMPARE   s6, INT_INTERVAL_0_1ST ; value read = just written
+                     JUMP      NZ, error_read		
+                    
+; Check access to copro:
+                     LOAD      s6, 2
+                     OUTPUT    s6, DATA_0_PORT
+                     OUTPUT    s6, DATA_1_PORT
+                     LOAD      s6, 3
+                     OUTPUT    s6, DATA_2_PORT
+                     OUTPUT    s6, DATA_3_PORT
+                     INPUT     s6, RESULT_PORT     ; should be 2*2 + 3*3 = 13 = 0x0D
+                     COMPARE   s6, 0D
+                     JUMP      NZ, error_read		
+                     
+                     ENABLE    INTERRUPT           ; Enable interrupts
+                     JUMP      main                ; and go to main program
+					
+error_read:          JUMP      error_read          ; Stay here forever if hardware error detected
+
+
+; Main loop: -------------
+
+main:               
+                     << INSERTAR AQUI INSTRUCCION PARA LEER EN s1 EL VALOR DE LOS PUSHBUTTONS >>
+                     
+                     TEST     s2, FF               ; if s2=0 show leds, else make leds=0
+                     JUMP     Z,  show_leds
+                     LOAD     s1, 0
+                     
+show_leds:
+                     << INSERTAR AQUI INSTRUCCION PARA VOLCAR EN LOS LEDS EL VALOR DE s1 >>
+
+                     JUMP     main
+
+; ------------------------------------------------------------------------------                     
+; Interrupt service routine
+; ------------------------------------------------------------------------------
+
+                     ADDRESS  0E0                ; (This could be any other address at
+                                                   ; an available program memory area)
+                    
+interrupt:
+                     ; Set normal interrupt period:
+                     LOAD     s6, INT_INTERVAL_0
+                     LOAD     s7, INT_INTERVAL_1
+                     LOAD     s8, INT_INTERVAL_2
+                     LOAD     s9, INT_INTERVAL_3
+                     OUTPUT   s6, GENINT_0_PORT
+                     OUTPUT   s7, GENINT_1_PORT
+                     OUTPUT   s8, GENINT_2_PORT
+                     OUTPUT   s9, GENINT_3_PORT
+
+                     ; Check switch SW0. If set, alternate s2 each time to get blinking:
+                     INPUT    sF, SWITCHES_PORT    ; get switches
+                     TEST     sF, 1                ; test SW0
+                     JUMP     Z, disable_blinking
+                     XOR      s2, FF               ; invert s2
+                     JUMP     return_i
+disable_blinking:    LOAD     s2, 0                ; s2=0 if blinking not desired
+return_i:            RETURNI  ENABLE               ; Return from interrupt with interrupt enabled
+
+; Interrupt vector: -------------
+
+                     ADDRESS  3FF                  ; (This value is fixed by PicoBlaze's architecture)
+                    
+                     JUMP     interrupt
+                    
+;---- END ----
+

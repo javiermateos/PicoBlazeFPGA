@@ -1,0 +1,152 @@
+; Universidad Autonoma de Madrid
+; Escuela Politecnica Superior
+; Laboratorio de DIE / DPySE
+;
+; Example program to run on a PicoBlaze design implemented in Zybo board.
+;
+; ------------------------------------------------------------------------------
+; Directive for VHDL ROM model generation (do not modify)
+; ------------------------------------------------------------------------------
+
+VHDL  "ROM_form.vhd", "rom_prog.vhd", "rom_prog"
+;      template file, output file,    entity name
+
+; ------------------------------------------------------------------------------
+; Constants declarations                                        
+; ------------------------------------------------------------------------------
+
+; Constants for addresses of peripherals' registers ("ports"): <--- MODIFICAR ESTOS VALORES
+;   - gen_interrupt registers:
+GENINT_0_PORT       EQU       $48     ; Interrupt generator interval, byte 0
+GENINT_1_PORT       EQU       $49     ; Interrupt generator interval, byte 1
+GENINT_2_PORT       EQU       $4A     ; Interrupt generator interval, byte 2
+GENINT_3_PORT       EQU       $4B     ; Interrupt generator interval, byte 3
+;   - sw_btn_leds registers:
+SWITCHES_PORT       EQU       $F0     ; Slide switches
+BUTTONS_PORT        EQU       $F1     ; Push buttons
+LEDS_PORT           EQU       $F2     ; LEDs
+;   - copro registers:
+DATA_0_PORT         EQU       $90     ; 7-segment digit 0
+DATA_1_PORT         EQU       $91     ; 7-segment digit 1
+DATA_2_PORT         EQU       $92     ; 7-segment digit 2
+DATA_3_PORT         EQU       $93     ; 7-segment digit 3
+RESULT_PORT         EQU       $94     ; 7-segment refresh. interval, byte 0
+
+; Constants for values of hardware configuration:
+; - gen_interrupt configuration to get one interrupt every 6250000 cycles (0.1s @62.5MHz):
+INT_INTERVAL_0      EQU       $0F     ; Interrupt generation interval, byte 0
+INT_INTERVAL_1      EQU       $5E     ; Interrupt generation interval, byte 1
+INT_INTERVAL_2      EQU       $5F     ; Interrupt generation interval, byte 2
+INT_INTERVAL_3      EQU       $00     ; Interrupt generation interval, byte 3
+; - gen_interrupt configuration to get one interrupt every 500 cycles:
+;   (this is used only for the first interrupt, to get it quickly in simulation)
+INT_INTERVAL_0_1ST  EQU       $F3     ; Interrupt generation interval, byte 0
+INT_INTERVAL_1_1ST  EQU       $01     ; Interrupt generation interval, byte 1
+INT_INTERVAL_2_1ST  EQU       $00     ; Interrupt generation interval, byte 2
+INT_INTERVAL_3_1ST  EQU       $00     ; Interrupt generation interval, byte 3
+
+; -------------------------------------------------------------
+; Directives to create GUI I/O controls in pBlazeIDE simulator
+; -------------------------------------------------------------
+
+IntPeriod_0         DSIO      GENINT_0_PORT
+IntPeriod_1         DSIO      GENINT_1_PORT
+IntPeriod_2         DSIO      GENINT_2_PORT
+IntPeriod_3         DSIO      GENINT_3_PORT
+
+Switches            DSIN      SWITCHES_PORT
+Buttons             DSIN      BUTTONS_PORT
+Leds                DSIO      LEDS_PORT
+
+Copro_0             DSIO      DATA_0_PORT
+Copro_1             DSIO      DATA_1_PORT
+Copro_2             DSIO      DATA_2_PORT
+Copro_3             DSIO      DATA_3_PORT
+Copro_Result        DSIN      RESULT_PORT
+
+; ------------------------------------------------------------------------------
+; Program start                                 
+; ------------------------------------------------------------------------------
+                                        
+; Initial configuration of hardware blocks:
+; - Initialize interrupt generation interval according to constants defined above:
+                     LOAD      s6, INT_INTERVAL_0_1ST
+                     LOAD      s7, INT_INTERVAL_1_1ST
+                     LOAD      s8, INT_INTERVAL_2_1ST
+                     LOAD      s9, INT_INTERVAL_3_1ST
+                     OUT       s6, GENINT_0_PORT
+                     OUT       s7, GENINT_1_PORT
+                     OUT       s8, GENINT_2_PORT
+                     OUT       s9, GENINT_3_PORT
+
+; Check reading of one register from gen_interrupt:
+                     IN        s6, GENINT_0_PORT      ;
+                     COMP      s6, INT_INTERVAL_0_1ST ; value read = just written
+                     JUMP      NZ, error_read		
+                    
+; Check access to copro:
+                     LOAD      s6, 2
+                     OUT       s6, DATA_0_PORT
+                     OUT       s6, DATA_1_PORT
+                     LOAD      s6, 3
+                     OUT       s6, DATA_2_PORT
+                     OUT       s6, DATA_3_PORT
+                     IN        s6, RESULT_PORT     ; should be 2*2 + 3*3 = 13
+                     COMP      s6, 13
+                     JUMP      NZ, error_read		
+                     
+                     EINT                          ; Enable interrupts
+                     JUMP      main                ; and go to main program
+					
+error_read:          JUMP      error_read          ; Stay here forever if hardware error detected
+
+
+; Main loop: -------------
+
+main:               
+                     << INSERTAR AQUI INSTRUCCION PARA LEER EN s1 EL VALOR DE LOS PUSHBUTTONS >>
+                     
+                     TEST     s2, $FF              ; if s2=0 show leds, else make leds=0
+                     JUMP     Z,  show_leds
+                     LOAD     s1, 0
+                     
+show_leds:
+                     << INSERTAR AQUI INSTRUCCION PARA VOLCAR EN LOS LEDS EL VALOR DE s1 >>
+
+                     JUMP     main
+
+; ------------------------------------------------------------------------------                     
+; Interrupt service routine
+; ------------------------------------------------------------------------------
+
+                     org       $0E0                ; (This could be any other address at
+                                                   ; an available program memory area)
+                    
+interrupt:
+                     ; Set normal interrupt period:
+                     LOAD      s6, INT_INTERVAL_0
+                     LOAD      s7, INT_INTERVAL_1
+                     LOAD      s8, INT_INTERVAL_2
+                     LOAD      s9, INT_INTERVAL_3
+                     OUT       s6, GENINT_0_PORT
+                     OUT       s7, GENINT_1_PORT
+                     OUT       s8, GENINT_2_PORT
+                     OUT       s9, GENINT_3_PORT
+
+                     ; Check switch SW0. If set, alternate s2 each time to get blinking:
+                     IN       sF, SWITCHES_PORT    ; get switches
+                     TEST     sF, 1                ; test SW0
+                     JUMP     Z, disable_blinking
+                     XOR      s2, $FF              ; invert s2
+                     JUMP     return_i
+disable_blinking:    LOAD     s2, 0                ; s2=0 if blinking not desired
+return_i:            RETI     ENABLE               ; Return from interrupt with interrupt enabled
+
+; Interrupt vector: -------------
+
+                     org      $3FF                 ; (This value is fixed by PicoBlaze's architecture)
+                    
+                     JUMP     interrupt
+                    
+;---- END ----
+
