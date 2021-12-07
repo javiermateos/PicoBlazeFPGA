@@ -3,4 +3,5 @@ PicoBlazeFPGA/vivado/pico_example
 *.fmt
 *.log
 *.mem
-rom_prog.vhd
+PicoBlazeFPGA/soft/Linux/rom_prog.vhd
+PicoBlazeFPGA/soft/Windows/rom_prog.vhd
