@@ -5,7 +5,7 @@
 --------------------------------------------------------------------------------
 -- Block: sw_btn_leds
 --
--- Author: (UAM)
+-- Author: Javier Mateos Najari
 --
 -- Description:
 --   Peripheral for PicoBlaze, providing registers to interface the slide
@@ -58,19 +58,22 @@ use ieee.std_logic_1164.all;
 architecture rtl of sw_btn_leds is
 
    --  Constants defining register addresses:
-   constant ADDR_SWITCHES    : std_logic_vector (1 downto 0) := ;  -- <-- COMPLETAR
-   constant ADDR_PUSHBUTTONS : std_logic_vector (1 downto 0) := ;  -- <-- COMPLETAR
-   constant ADDR_LEDS        : std_logic_vector (1 downto 0) := ;  -- <-- COMPLETAR
+   constant ADDR_SWITCHES    : std_logic_vector (1 downto 0) := "00";  -- <-- COMPLETAR
+   constant ADDR_PUSHBUTTONS : std_logic_vector (1 downto 0) := "01";  -- <-- COMPLETAR
+   constant ADDR_LEDS        : std_logic_vector (1 downto 0) := "10";  -- <-- COMPLETAR
 
    -- Signal declarations:
-
    --   Anti-metastability chains for switches and pushbuttons:
    signal switchMeta0 : std_logic_vector (3 downto 0); -- first FF in chain
    signal switchMeta1 : std_logic_vector (3 downto 0); -- second FF in chain
    signal buttonMeta0 : std_logic_vector (3 downto 0); -- first FF in chain
    signal buttonMeta1 : std_logic_vector (3 downto 0); -- second FF in chain
-   --   LED value register:
-   signal ledsValue   : std_logic_vector (3 downto 0);
+
+   --   Registers:
+   signal ledsValue     : std_logic_vector (3 downto 0);
+   signal switchesValue : std_logic_vector (3 downto 0);
+   signal buttonsValue  : std_logic_vector (3 downto 0);
+
   
 begin
 
@@ -91,10 +94,16 @@ begin
    end process;  
   
    -- User-writable registers: LEDs:
-   process (Clk, Reset)                 -- <-- COMPLETAR ESTE PROCESO
+   process (Clk, Reset)
    begin
       if Reset = '1' then
       elsif Clk'event and Clk = '1' then
+         if (Sel = '1') and (WriteEn = '1') then
+            case Address is
+               when ADDR_LEDS => 
+                   ledsValue <= WData;
+            end case;
+         end if;
       end if;
    end process;  
 
@@ -102,8 +111,18 @@ begin
                      -- to read it below
 
    -- User-readable registers: all (switches, pushbuttons and programmed led values)
-   process (Address, switchMeta1, buttonMeta1, ledsValue)  -- <-- COMPLETAR ESTE PROCESO
+   process (Address, switchMeta1, buttonMeta1, ledsValue)
    begin
+       case Address is
+           when ADDR_LEDS =>
+               RData <= "0000" & ledsValue;
+            when ADDR_PUSHBUTTONS =>
+                RData <= "0000" & buttonMeta1;
+            when ADDR_SWITCHES =>
+                RData <= "0000" & switchMeta1;
+            when others => 
+                RData <= (others => '0');
+            end case;
    end process;    
  
 end rtl;
