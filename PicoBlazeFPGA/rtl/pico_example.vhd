@@ -5,7 +5,7 @@
 --------------------------------------------------------------------------------
 -- Block: pico_example
 --
--- Author: (UAM)
+-- Author: Javier Mateos Najari
 --
 -- Description:
 --   Top level of a PicoBlaze-based design example targeting the Zybo board.
@@ -237,21 +237,21 @@ begin
    i_decoder : decoder
       port map  (
          -- Port address from microprocessor:
-         PortId  => 
+         PortId  => PortId,
          -- Selection output to peripherals:
-         Sel     => 
+         Sel     => sel
       );
   
    -- Read data muxing, from peripherals to PicoBlaze:  
    i_mux_rdata : mux_rdata
       port map (
          -- Input selection bits and input read data buses:
-         Sel      => 
-         RDataIn0 => 
-         RDataIn1 => 
-         RDataIn2 => 
+         Sel      => sel,
+         RDataIn0 => rData0_gint,
+         RDataIn1 => rData1_sbleds,
+         RDataIn2 => rData2_copro,
          -- Output read data buses:
-         RDataOut => 
+         RDataOut => inPort
       );
 
    -- Periodic interrupt generation block:
@@ -261,14 +261,14 @@ begin
          Clk          => clk2,
          Reset        => reset,
          -- Configuration Registers interface
-         Sel          => 
-         WriteEn      => 
-         Address      => 
-         WData        => 
-         RData        => 
+         Sel          => sel (0),
+         WriteEn      => writeStrobe,
+         Address      => PortId (1 downto 0),
+         WData        => outPort,
+         RData        => rData0_gint,
          -- Interrupt interface:
-         InterruptAck => 
-         Interrupt    => 
+         InterruptAck => interruptAck,
+         Interrupt    => interrupt
       );
    
    -- Switches, pushbuttons and LEDs I/O interface:
@@ -278,15 +278,15 @@ begin
          Clk     => clk2,
          Reset   => reset,
          -- Configuration Registers interface
-         Sel     => 
-         WriteEn => 
-         Address => 
-         WData   => 
-         RData   => 
+         Sel     => sel (1),
+         WriteEn => writeStrobe,
+         Address => PortId (1 downto 0),
+         WData   => outPort,
+         RData   => rData1_sbleds,
          -- External Input/Output interface:
-         Switch  => 
-         Button  => 
-         Led     => 
+         Switch  => Switch,
+         Button  => Button,
+         Led     => Led
       );
 
    -- Coprocessor example:
@@ -297,11 +297,11 @@ begin
          Reset   => reset,
 
          -- Configuration Registers interface
-         Sel     =>
-         WriteEn =>
-         Address =>
-         WData   =>
-         RData   =>
+         Sel     => sel (2),
+         WriteEn => writeStrobe,
+         Address => PortId (2 downto 0),
+         WData   => outPort,
+         RData   => rData2_copro
       );
   
 end structural;
