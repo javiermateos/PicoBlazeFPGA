@@ -166,7 +166,7 @@ architecture structural of pico_example is
 
    -- PicoBlaze signals:
    signal instAddress  : std_logic_vector (9 downto 0); -- Instruction address
-   signal instruction  : std_logic_vector (17 downto 0);-- Instruction word
+   signal instruction  : std_logic_vector (17 downto 0); -- Instruction word
    signal portId       : std_logic_vector (7 downto 0); -- I/O port address
    signal writeStrobe  : std_logic;                     -- I/O write strobe
    signal outPort      : std_logic_vector (7 downto 0); -- I/O write data
@@ -237,21 +237,21 @@ begin
    i_decoder : decoder
       port map  (
          -- Port address from microprocessor:
-         PortId  => PortId,
+         PortId  => portId (7 downto 0),
          -- Selection output to peripherals:
-         Sel     => sel
+         Sel     => sel (2 downto 0)
       );
   
    -- Read data muxing, from peripherals to PicoBlaze:  
    i_mux_rdata : mux_rdata
       port map (
          -- Input selection bits and input read data buses:
-         Sel      => sel,
-         RDataIn0 => rData0_gint,
-         RDataIn1 => rData1_sbleds,
-         RDataIn2 => rData2_copro,
+         Sel      => sel (2 downto 0),
+         RDataIn0 => rData0_gint (7 downto 0),
+         RDataIn1 => rData1_sbleds (7 downto 0),
+         RDataIn2 => rData2_copro (7 downto 0),
          -- Output read data buses:
-         RDataOut => inPort
+         RDataOut => inPort (7 downto 0)
       );
 
    -- Periodic interrupt generation block:
@@ -263,9 +263,9 @@ begin
          -- Configuration Registers interface
          Sel          => sel (0),
          WriteEn      => writeStrobe,
-         Address      => PortId (1 downto 0),
-         WData        => outPort,
-         RData        => rData0_gint,
+         Address      => portId (1 downto 0),
+         WData        => outPort (7 downto 0),
+         RData        => rData0_gint (7 downto 0),
          -- Interrupt interface:
          InterruptAck => interruptAck,
          Interrupt    => interrupt
@@ -280,13 +280,13 @@ begin
          -- Configuration Registers interface
          Sel     => sel (1),
          WriteEn => writeStrobe,
-         Address => PortId (1 downto 0),
-         WData   => outPort,
-         RData   => rData1_sbleds,
+         Address => portId (1 downto 0),
+         WData   => outPort (7 downto 0),
+         RData   => rData1_sbleds (7 downto 0),
          -- External Input/Output interface:
-         Switch  => Switch,
-         Button  => Button,
-         Led     => Led
+         Switch  => Switch (3 downto 0),
+         Button  => Button (3 downto 0),
+         Led     => Led (3 downto 0)
       );
 
    -- Coprocessor example:
@@ -299,9 +299,9 @@ begin
          -- Configuration Registers interface
          Sel     => sel (2),
          WriteEn => writeStrobe,
-         Address => PortId (2 downto 0),
-         WData   => outPort,
-         RData   => rData2_copro
+         Address => portId (2 downto 0),
+         WData   => outPort (7 downto 0),
+         RData   => rData2_copro (7 downto 0)
       );
   
 end structural;

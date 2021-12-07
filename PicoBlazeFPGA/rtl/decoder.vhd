@@ -35,23 +35,13 @@ end decoder;
 --------------------------------------------------------------------------------
 
 architecture rtl of decoder is
-
-    signal baseAddress: std_logic_vector (4 downto 0);
 begin
 
-   process (PortId)
-   begin
-      baseAddress <= PortId (7 downto 3);
-      case baseAddress is
-         when "11100"  => -- Base: E0, Peripheral: gen_interrupt
-             Sel <= "001";
-         when "11101"  => -- Base: E8, Peripheral: sw_btn_leds
-             Sel <= "010";
-         when "11110"  => -- Base: F0, Peripheral: copro
-             Sel <= "100";
-         when others => null; -- do nothing
-      end case;
-   end process;
+with PortId(7 downto 3) select
+    Sel <= "001" when "11100", -- Base: E0, Peripheral: gen_interrupt
+           "010" when "11101", -- Base: E8, Peripheral: sw_btn_leds
+           "100" when "11110", -- Base: F0, Peripheral: copro
+           "000" when others;
   
 end rtl;
 

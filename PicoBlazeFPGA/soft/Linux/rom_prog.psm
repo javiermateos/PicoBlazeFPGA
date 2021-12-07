@@ -87,7 +87,7 @@ main:
                      LOAD     s1, 0
                      
 show_leds:
-                     OUTPUT s1, LEDS_PORT
+                     OUTPUT   s1, LEDS_PORT
 
                      JUMP     main
 

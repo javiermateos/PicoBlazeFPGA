@@ -71,9 +71,6 @@ architecture rtl of sw_btn_leds is
 
    --   Registers:
    signal ledsValue     : std_logic_vector (3 downto 0);
-   signal switchesValue : std_logic_vector (3 downto 0);
-   signal buttonsValue  : std_logic_vector (3 downto 0);
-
   
 begin
 
@@ -97,11 +94,13 @@ begin
    process (Clk, Reset)
    begin
       if Reset = '1' then
+          ledsValue <= (others => '0');
       elsif Clk'event and Clk = '1' then
          if (Sel = '1') and (WriteEn = '1') then
             case Address is
                when ADDR_LEDS => 
-                   ledsValue <= WData;
+                   ledsValue <= WData(3 downto 0);
+               when others => null;
             end case;
          end if;
       end if;
@@ -113,17 +112,16 @@ begin
    -- User-readable registers: all (switches, pushbuttons and programmed led values)
    process (Address, switchMeta1, buttonMeta1, ledsValue)
    begin
-       case Address is
-           when ADDR_LEDS =>
-               RData <= "0000" & ledsValue;
-            when ADDR_PUSHBUTTONS =>
-                RData <= "0000" & buttonMeta1;
-            when ADDR_SWITCHES =>
-                RData <= "0000" & switchMeta1;
-            when others => 
-                RData <= (others => '0');
-            end case;
-   end process;    
+    case Address is
+        when ADDR_LEDS =>
+            RData <= "0000" & ledsValue;
+        when ADDR_PUSHBUTTONS =>
+            RData <= "0000" & buttonMeta1;
+        when ADDR_SWITCHES =>
+            RData <= "0000" & switchMeta1;
+        when others => null;
+    end case;
+   end process;
  
 end rtl;
 
