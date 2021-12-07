@@ -58,9 +58,9 @@ use ieee.std_logic_1164.all;
 architecture rtl of sw_btn_leds is
 
    --  Constants defining register addresses:
-   constant ADDR_SWITCHES    : std_logic_vector (1 downto 0) := "00";  -- <-- COMPLETAR
-   constant ADDR_PUSHBUTTONS : std_logic_vector (1 downto 0) := "01";  -- <-- COMPLETAR
-   constant ADDR_LEDS        : std_logic_vector (1 downto 0) := "10";  -- <-- COMPLETAR
+   constant ADDR_SWITCHES    : std_logic_vector (1 downto 0) := "00";
+   constant ADDR_PUSHBUTTONS : std_logic_vector (1 downto 0) := "01";
+   constant ADDR_LEDS        : std_logic_vector (1 downto 0) := "10";
 
    -- Signal declarations:
    --   Anti-metastability chains for switches and pushbuttons:

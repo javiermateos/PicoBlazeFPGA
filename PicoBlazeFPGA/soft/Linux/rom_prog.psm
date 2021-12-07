@@ -1,7 +1,8 @@
 ; Universidad Autonoma de Madrid
 ; Escuela Politecnica Superior
 ; Laboratorio de DIE / DPySE
-;
+; Javier Mateos Najari
+
 ; Example program to run on a PicoBlaze design implemented in Zybo board.
 ;
 
@@ -9,22 +10,22 @@
 ; Constants declarations                                        
 ; ------------------------------------------------------------------------------
 
-; Constants for addresses of peripherals' registers ("ports"): <--- MODIFICAR ESTOS VALORES
+; Constants for addresses of peripherals' registers ("ports"):
 ;   - gen_interrupt registers:
-CONSTANT GENINT_0_PORT       ,       48     ; Interrupt generator interval, byte 0
-CONSTANT GENINT_1_PORT       ,       49     ; Interrupt generator interval, byte 1
-CONSTANT GENINT_2_PORT       ,       4A     ; Interrupt generator interval, byte 2
-CONSTANT GENINT_3_PORT       ,       4B     ; Interrupt generator interval, byte 3
+CONSTANT GENINT_0_PORT       ,       E0     ; Interrupt generator interval, byte 0
+CONSTANT GENINT_1_PORT       ,       E1     ; Interrupt generator interval, byte 1
+CONSTANT GENINT_2_PORT       ,       E2     ; Interrupt generator interval, byte 2
+CONSTANT GENINT_3_PORT       ,       E3     ; Interrupt generator interval, byte 3
 ;   - sw_btn_leds registers: 
-CONSTANT SWITCHES_PORT       ,       F0     ; Slide switches
-CONSTANT BUTTONS_PORT        ,       F1     ; Push buttons
-CONSTANT LEDS_PORT           ,       F2     ; LEDs
+CONSTANT SWITCHES_PORT       ,       E8     ; Slide switches
+CONSTANT BUTTONS_PORT        ,       E9     ; Push buttons
+CONSTANT LEDS_PORT           ,       EA     ; LEDs
 ;   - copro registers:       
-CONSTANT DATA_0_PORT         ,       90     ; 7-segment digit 0
-CONSTANT DATA_1_PORT         ,       91     ; 7-segment digit 1
-CONSTANT DATA_2_PORT         ,       92     ; 7-segment digit 2
-CONSTANT DATA_3_PORT         ,       93     ; 7-segment digit 3
-CONSTANT RESULT_PORT         ,       94     ; 7-segment refresh. interval, byte 0
+CONSTANT DATA_0_PORT         ,       F0     ; 7-segment digit 0
+CONSTANT DATA_1_PORT         ,       F1     ; 7-segment digit 1
+CONSTANT DATA_2_PORT         ,       F2     ; 7-segment digit 2
+CONSTANT DATA_3_PORT         ,       F3     ; 7-segment digit 3
+CONSTANT RESULT_PORT         ,       F4     ; 7-segment refresh. interval, byte 0
 
 ; Constants for values of hardware configuration:
 ; - gen_interrupt configuration to get one interrupt every 6250000 cycles (0.1s @62.5MHz):
@@ -79,14 +80,14 @@ error_read:          JUMP      error_read          ; Stay here forever if hardwa
 ; Main loop: -------------
 
 main:               
-                     << INSERTAR AQUI INSTRUCCION PARA LEER EN s1 EL VALOR DE LOS PUSHBUTTONS >>
+                     LOAD     s1, BUTTONS_PORT
                      
                      TEST     s2, FF               ; if s2=0 show leds, else make leds=0
                      JUMP     Z,  show_leds
                      LOAD     s1, 0
                      
 show_leds:
-                     << INSERTAR AQUI INSTRUCCION PARA VOLCAR EN LOS LEDS EL VALOR DE s1 >>
+                     OUTPUT s1, LEDS_PORT
 
                      JUMP     main
 
