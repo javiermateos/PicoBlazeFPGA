@@ -1,4 +1,5 @@
-*.pdf
+assets/docs/DIE_Practica4_2021-22.pdf
+assets/docs/Diapositivas_explicaciones_P4.pdf
 PicoBlazeFPGA/vivado/pico_example
 *.fmt
 *.log
