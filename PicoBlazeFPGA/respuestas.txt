@@ -1,9 +1,19 @@
 1. Cuántos ciclos del reloj interno de 62.5 Mhz tarda en ejecutarse cada instrucción?
 
+4 Ciclos
+
 2.a Que ocurre con el valor de la señal de interrupción que va de gen_interrupt
 al procesador cuando aparece el pulso a nivel alto en la señal de "ack" de interrupción?
+
+Cuando la señal interruptack llega al dispositivo gen_interrupt se apaga la señal
+de interrupción de gen_interrupt.
 
 2.b Que valor toma el "program counter" del microprocesador en el momento en que aparece
 la señal de "ack" de interrupción?
 
+3FF
+
 2.c Por que?
+
+Por el vector de interrupciones se encuentra en la dirección 3FF para la arquitectura
+PicoBlaze.

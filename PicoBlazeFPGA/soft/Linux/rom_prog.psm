@@ -80,7 +80,7 @@ error_read:          JUMP      error_read          ; Stay here forever if hardwa
 ; Main loop: -------------
 
 main:               
-                     LOAD     s1, BUTTONS_PORT
+                     INPUT     s1, BUTTONS_PORT
                      
                      TEST     s2, FF               ; if s2=0 show leds, else make leds=0
                      JUMP     Z,  show_leds
